@@ -26,7 +26,17 @@ classdef WecSystemModel < handle
     
     methods (Access = public)
         % Constructor
-        function obj = WecSystemModel(hydFilename)
+        function obj = WecSystemModel(hydFilename, varargin)
+            % WecModel = WecSystemModel(hydFilename)
+            %
+            % WecModel = WecSystemModel(hydFilename, bGen) also sets the
+            % constant generator damping value.
+            
+            obj.bGen = 0;
+            if nargin == 2
+                obj.bGen = 1e5;
+            end
+            
             % Load hydrdynamic data file
             obj.hydFile = hydFilename;           
             [hydParms] = read_hyd_file(obj);
@@ -39,8 +49,7 @@ classdef WecSystemModel < handle
             % these are hardcoded for now. Need to make this dynamic
             obj.mass = 140076.5;
             obj.kHyd = 1025 * 9.81 * pi * 25;
-            %obj.bGen = 1e5;
-            obj.bGen = 0;
+
             % Construct my impulse response functions
             obj.feIrf  = calc_fe_irf(obj);
             obj.radIrf = calc_radiation_irf(obj);
