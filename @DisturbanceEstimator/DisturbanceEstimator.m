@@ -10,11 +10,12 @@ classdef DisturbanceEstimator < handle
         k
         Q
         R
+        b      % Only needed if not being estimated
+        feFreq %   "     "    "  "    "       " 
+        
     end
     
     properties (SetAccess = public)
-        b      % Only needed if not being estimated
-        feFreq %   "     "    "  "    "       " 
         dt = 0.5;
     end
     
@@ -50,8 +51,8 @@ classdef DisturbanceEstimator < handle
             obj.nStates = 4 + length(obj.parameters);
             if obj.nStates == 4
                 obj.type = 'linear';
-                obj.b = 1000;
-                obj.feFreq = 2*pi/10;
+                %obj.b = 1000;
+                %obj.feFreq = 2*pi/10;
             else
                 obj.type = 'ekf';
             end
