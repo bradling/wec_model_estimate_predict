@@ -123,7 +123,7 @@ classdef WecSystemModel < handle
     methods (Access = private)
         function SS = construct_state_space_model(obj)
             % State vector x = [Xrad z zdot]
-            % Output y = [zdot z]
+            % Output y = [z zDot]
             
             % check to see if the approximation has been done already
             if isempty(obj.ssRad)
@@ -139,7 +139,7 @@ classdef WecSystemModel < handle
                      zeros(1,n+1) 1 ;
                      -obj.ssRad.C ./ a -obj.kHyd / a -obj.bGen/a ];
             SS.B = [zeros(n+1, 1) ; 1/a];
-            SS.C = [zeros(2,n)  [0 1; 1 0] ];
+            SS.C = [zeros(2,n)  eye(2) ];
             
             % clear the old verification results
             obj.verify_results = [];

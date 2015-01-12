@@ -11,6 +11,10 @@ if isempty(obj.ssRad)
     error('State Space Radiation Approximation not calculated.');
 end
 
+% set bGen to zero
+bGen = obj.bGen;
+obj.bGen = 0;
+
 plotFlag = true;
 if nargin == 2
     plotFlag = varargin{1};
@@ -34,10 +38,10 @@ for ii = 1:length(freq)
     eta = sin(freq(ii).*t);
     simresults = obj.run_state_space_simulation(eta, dt);
     
-    raox(ii) = max(simresults.z(2,6000:end));
+    raox(ii) = max(simresults.z(6000:end));
     frMag(ii) = max(simresults.fr(6000:end));
     feMag(ii) = max(simresults.fe(6000:end));
-    zdotMax(ii) = max(simresults.z(1, 6000:end));
+    zdotMax(ii) = max(simresults.zdot(6000:end));
     
     % get phase shift too!
     [~, feLocs] = findpeaks(simresults.fe(4750:end));
@@ -119,3 +123,6 @@ if plotFlag == true
     ylabel('Phase Shift (rad)')
     grid on
 end
+
+% reset bGen
+obj.bGen = bGen;
