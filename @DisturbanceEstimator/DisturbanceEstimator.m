@@ -67,29 +67,36 @@ classdef DisturbanceEstimator < handle
             
         end %DisturbanceEstimator
         
-        function estimates = calc_estimation(obj, measurements, initEst, P0)
+        function [estimates, varargout] = calc_estimation(obj, measurements, initEst, P0)
             % The core function. Makes estimations given the model and
             % everything else.
             if strcmp(obj.type, 'linear') == true
-                xHat = kalman_filter(obj, measurements, initEst, P0);
+                [xHat, xp] = kalman_filter(obj, measurements, initEst, P0);
                 estimates.zHat    = xHat(1,:)';
                 estimates.zDotHat = xHat(2,:)';
                 estimates.feHat   = xHat(3,:)';
             else % then it must be ekf
-                xHat = ekf(obj, measurements, initEst, P0);
+                [xHat, xp] = ekf(obj, measurements, initEst, P0);
                 estimates.zHat    = xHat(1,:)';
                 estimates.zDotHat = xHat(2,:)';
                 estimates.feHat   = xHat(3,:)';
-                switch ismember({'dampCoeff', 'feFreq'}, obj.parameters)
-                    case [1 0]
+                
+                myCase = sprintf('%i%i', ismember({'dampCoeff', 'feFreq'}, obj.parameters));
+                switch myCase
+                    case '10'
                         estimates.dampCoeff = xHat(5,:)';
-                    case [0 1]
+                    case '01'
                         estimates.feFreq    = xHat(5,:)';
-                    case [1 1]
+                    case '11'
                         estimates.dampCoeff = xHat(6,:)';
                         estimates.feFreq    = xHat(5,:)';
                 end%switch
+                
+                
             end % if
+            if nargout == 2
+                varargout{1} = xp;
+            end
         end % calc_estimation
         
     end % public methods
@@ -97,7 +104,7 @@ classdef DisturbanceEstimator < handle
     methods (Access = private)
         
         % Note: Algorithm comes from http://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
-        function xHat = kalman_filter(obj, y, initEst, P0)
+        function [xHat, xp] = kalman_filter(obj, y, initEst, P0)
             if size(y,2) < size(y,1)
                 y = y';
             end
@@ -106,20 +113,22 @@ classdef DisturbanceEstimator < handle
             I = eye(obj.nStates);
             
             xHat = nan(obj.nStates, size(y,2));
+            xp   = nan(obj.nStates, size(y,2));
             xHat(:,1) = initEst;
+            xp(:,1)   = initEst;
             P = P0;
             for ii = 1:size(y,2)-1
-                xt = A*xHat(:,ii);
+                xp(:,ii+1) = A*xHat(:,ii);  
                 P = A*P*A' + obj.Q;
                 K = P*C' / (C*P*C' + obj.R);
-                xHat(:, ii+1) = xt + K*(y(:,ii) - C*xt);
+                xHat(:, ii+1) = xp(:,ii+1) + K*(y(:,ii+1) - C*xp(:,ii+1));  
                 P = (I - K*C)*P;
             end
             
         end %kalman_filter
         
         % Note: Algorithm comes from http://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
-        function xHat = ekf(obj, y, initEst, P0)
+        function [xHat, xp] = ekf(obj, y, initEst, P0)
             if size(y,2) < size(y,1)
                 y = y';
             end
@@ -128,17 +137,19 @@ classdef DisturbanceEstimator < handle
             I = eye(obj.nStates);            
             
             xHat = nan(obj.nStates, size(y,2));
+            xp   = nan(obj.nStates, size(y,2));
             xHat(:,1) = initEst;
+            xp(:,1)   = initEst;
             P = P0;
             for ii = 1:size(y,2)-1
                 [A, F] = calc_a(obj, xHat(:,ii));
-                
-                xt = F * xHat(:,ii);
+                xp(:,ii+1) = F * xHat(:,ii);
                 P = A*P*A'+ obj.Q;
-                K = Pp*C' / (C*P*C' + obj.R);
-                xHat(:,ii+1) = xt + K*(y(:,ii) - C*xt);
+                K = P*C' / (C*P*C' + obj.R);
+                xHat(:,ii+1) = xp(:,ii+1) + K*(y(:,ii+1) - C*xp(:,ii+1));
                 P = (I - K*C)*P;
             end %loop
+            
             
         end %ekf
         
