@@ -18,12 +18,12 @@ simResults.t = simResults.t';
 
 % calculate output equation
 simResults.z = nan(1,length(simResults.t));
-simResults.zDont = nan(1,length(simResults.t));
+simResults.zDot = nan(1,length(simResults.t));
 simResults.fr = nan(1,length(simResults.t));
 simResults.fk = nan(1,length(simResults.t));
 for ii = 1:length(simResults.t)
     simResults.z(:,ii) = SS.C(1,:)*yout(ii,:)';
-    simResults.zdot(:,ii) = SS.C(2,:)*yout(ii,:)';
+    simResults.zDot(:,ii) = SS.C(2,:)*yout(ii,:)';
     simResults.fr(ii) = -yout(ii,3) * yout(ii,5);
     simResults.fk(ii) = -yout(ii,4) * obj.kHyd;
 end
