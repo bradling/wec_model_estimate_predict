@@ -41,12 +41,18 @@ classdef DisturbanceEstimator < handle
                         case 'feFreq'
                             obj.feFreq = parmValues.(fields{ii});
                         otherwise
-                            error('bad parameter')
+                            error('bad parameter value')
                     end
                 end
             end %if
 
-            
+            % get parameters that are to be estimated
+            errorCase = and(~isempty(parameters), ...
+                any(~ismember(parameters, {'feFreq', 'dampCoeff'} )));
+            if errorCase == true
+                error('bad estimated parameter specification');
+            end
+            clear errorCase
             obj.parameters = parameters;
             obj.nStates = 4 + length(obj.parameters);
             if obj.nStates == 4
