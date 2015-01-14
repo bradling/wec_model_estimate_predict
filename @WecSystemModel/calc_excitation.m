@@ -79,7 +79,7 @@ end
 % Trim the output
 trimmedTime = etaInterpTime(~isnan(fe));
 fe = fe(~isnan(fe));
-feTime = min(trimmedTime):dt:max(trimmedTime);
+feTime = floor( (min(trimmedTime):dt:max(trimmedTime)) ./ dt) .* dt;
 
 idx = dsearchn(trimmedTime', feTime');
 fe = fe(idx);
