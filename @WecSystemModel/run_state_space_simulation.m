@@ -30,7 +30,12 @@ end
 
 % This is my equations of motion
     function dx = eom(t,x)
-        u = interp1(feTime, simResults.fe, t);
+        idx = find(floor(t/dt)*dt == feTime);
+        if (t-feTime(idx)) > 1e-8
+            u = (simResults.fe(idx+1) - simResults.fe(idx))*(t-feTime(idx))/(feTime(idx+1)-feTime(idx)) + simResults.fe(idx);
+        else
+            u = simResults.fe(idx);
+        end
         dx = SS.A*x + SS.B * u;
     end
 end
