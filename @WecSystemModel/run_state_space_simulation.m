@@ -1,8 +1,21 @@
 % run simulation using state space model
-function simResults = run_state_space_simulation(obj, eta, dt)
+function simResults = run_state_space_simulation(obj, eta, dt, varargin)
+%
+% simResults = run_state_space_simulation(obj, eta, dt). where dt is the
+% sample time for eta.
+% 
+% simResults = run_state_space_simulation(obj, eta, dt, dtSim) : gives a
+% different sample time for results than was input with eta.
+
+
 
 % Calculate excitation force
 [simResults.fe, feTime] = calc_excitation(obj, eta, dt);
+
+tvals = feTime;
+if nargin == 4
+    tvals = feTime(1):varargin{1}:feTime(end);
+end
 
 % ramp in fe
 simResults.fe(1:200) = linspace(0,1,200) .* simResults.fe(1:200);
@@ -12,7 +25,7 @@ SS = construct_state_space_model(obj);
 
 % Run Simulation
 X0 = zeros(size(SS.A,1), 1);
-tvals = (dt .* (0:length(feTime)-1)) + feTime(1);
+%tvals = (dt .* (0:length(feTime)-1)) + feTime(1);
 [simResults.t, yout] = ode45(@eom, tvals, X0);
 simResults.t = simResults.t';
 

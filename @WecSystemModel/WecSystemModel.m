@@ -129,7 +129,7 @@ classdef WecSystemModel < handle
         end
     end
     
-    methods (Access = private)
+    methods (Access = public)
         function SS = construct_state_space_model(obj)
             % State vector x = [Xrad z zdot]
             % Output y = [z zDot]
@@ -167,7 +167,7 @@ classdef WecSystemModel < handle
     % These methods are stored in other files but accessable to the user
     methods (Access = public)
         [varargout] = state_space_radiation_approx(obj, modelOrder, varargin);
-        simResults = run_state_space_simulation(obj, eta, dt)
+        simResults = run_state_space_simulation(obj, eta, dt, varargin)
         verify_state_space_model(obj, varargin);
     end
     
