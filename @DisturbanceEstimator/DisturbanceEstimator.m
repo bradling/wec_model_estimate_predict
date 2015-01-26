@@ -76,18 +76,19 @@ classdef DisturbanceEstimator < handle
         function [estimates, varargout] = calc_estimation(obj, measurements, initEst, P0)
             % The core function. Makes estimations given the model and
             % everything else.
+            myCase = sprintf('%i%i', ismember({'dampCoeff', 'feFreq'}, obj.parameters));
+
             if strcmp(obj.type, 'linear') == true
-                [xHat, xp] = kalman_filter(obj, measurements, initEst, P0);
+                [xHat, xp] = kalman_filter(obj, measurements, initEst, P0, myCase);
                 estimates.zHat    = xHat(1,:)';
                 estimates.zDotHat = xHat(2,:)';
                 estimates.feHat   = xHat(3,:)';
             else % then it must be ekf
-                [xHat, xp] = ekf(obj, measurements, initEst, P0);
+                [xHat, xp] = ekf(obj, measurements, initEst, P0, myCase);
                 estimates.zHat    = xHat(1,:)';
                 estimates.zDotHat = xHat(2,:)';
                 estimates.feHat   = xHat(3,:)';
                 
-                myCase = sprintf('%i%i', ismember({'dampCoeff', 'feFreq'}, obj.parameters));
                 switch myCase
                     case '10'
                         estimates.dampCoeff = xHat(5,:)';
@@ -110,11 +111,11 @@ classdef DisturbanceEstimator < handle
     methods (Access = private)
         
         % Note: Algorithm comes from http://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
-        function [xHat, xp] = kalman_filter(obj, y, initEst, P0)
+        function [xHat, xp] = kalman_filter(obj, y, initEst, P0, myCase)
             if size(y,2) < size(y,1)
                 y = y';
             end
-            A = calc_a(obj, zeros(4,1));
+            A = calc_a(obj, zeros(4,1), myCase);
             C = calc_c(obj);
             I = eye(obj.nStates);
             
@@ -134,7 +135,7 @@ classdef DisturbanceEstimator < handle
         end %kalman_filter
         
         % Note: Algorithm comes from http://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
-        function [xHat, xp] = ekf(obj, y, initEst, P0)
+        function [xHat, xp] = ekf(obj, y, initEst, P0, myCase)
             if size(y,2) < size(y,1)
                 y = y';
             end
@@ -148,7 +149,7 @@ classdef DisturbanceEstimator < handle
             xp(:,1)   = initEst;
             P = P0;
             for ii = 1:size(y,2)-1
-                [A, F] = calc_a(obj, xHat(:,ii));
+                [A, F] = calc_a(obj, xHat(:,ii), myCase);
                 xp(:,ii+1) = F * xHat(:,ii);
                 P = A*P*A'+ obj.Q;
                 K = P*C' / (C*P*C' + obj.R);
@@ -165,7 +166,7 @@ classdef DisturbanceEstimator < handle
         end
         
         
-        [A, varargout] = calc_a(obj, estState)
+        [A, varargout] = calc_a(obj, estState, myCase)
         
     end % private methods
     

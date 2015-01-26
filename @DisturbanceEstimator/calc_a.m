@@ -1,6 +1,6 @@
-function [A, varargout] = calc_a(obj, estState)
+function [A, varargout] = calc_a(obj, estState, myCase)
 % Note - estState vector is : [z dz f df (parms)]^T
-myCase = sprintf('%i%i', ismember({'dampCoeff', 'feFreq'}, obj.parameters));
+
 switch myCase
     case '10'
         c1 = obj.k/obj.m;
