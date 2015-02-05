@@ -41,7 +41,7 @@ for ii = 1:length(freq)
     raox(ii) = max(simresults.z(6000:end));
     frMag(ii) = max(simresults.fr(6000:end));
     feMag(ii) = max(simresults.fe(6000:end));
-    zdotMax(ii) = max(simresults.zdot(6000:end));
+    zdotMax(ii) = max(simresults.zDot(6000:end));
     
     % get phase shift too!
     [~, feLocs] = findpeaks(simresults.fe(4750:end));
