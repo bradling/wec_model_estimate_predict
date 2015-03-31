@@ -41,12 +41,7 @@ function [rad] = calc_radiation_irf(obj, varargin)
 % Algorithm
 
 % input handling
-if nargin > 1
-    rad.t = varargin{1};
-else
-    rad.t = 0:0.05:20;
-end
-
+rad.t = obj.radIrf.t;
 omega = obj.radFreq(:,1);
 mag   = obj.radFreq(:,2);
 

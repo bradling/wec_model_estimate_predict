@@ -10,7 +10,7 @@ function simResults = run_state_space_simulation(obj, eta, dt, varargin)
 
 
 % Calculate excitation force
-[simResults.fe, feTime] = calc_excitation(obj, eta, dt);
+[simResults.fe, feTime, simResults.eta] = calc_excitation(obj, eta, dt);
 
 tvals = feTime;
 if nargin == 4
@@ -28,6 +28,7 @@ X0 = zeros(size(SS.A,1), 1);
 %tvals = (dt .* (0:length(feTime)-1)) + feTime(1);
 [simResults.t, yout] = ode45(@eom, tvals, X0);
 simResults.t = simResults.t';
+simResults.state = yout';
 
 % calculate output equation
 simResults.z = nan(1,length(simResults.t));

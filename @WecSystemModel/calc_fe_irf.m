@@ -1,4 +1,4 @@
-function feIrf = calc_fe_irf(obj, varargin)
+function feIrf = calc_fe_irf(obj)
 % Calculate the Fe IRF Function
 %
 % REFERENCE: falnes, ocean waves and oscillating systems
@@ -47,11 +47,8 @@ function feIrf = calc_fe_irf(obj, varargin)
 mag   = obj.feFreq(:,2);
 phase = obj.feFreq(:,3);
 freq  = obj.feFreq(:,1);
-if nargin > 1
-    t = varargin{1};
-else
-    t = -25:0.05:25;
-end
+t = obj.feIrf.t;
+
 zero_value = 1.1*mag(1);
 
 

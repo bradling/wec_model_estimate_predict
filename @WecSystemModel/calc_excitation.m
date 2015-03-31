@@ -1,4 +1,4 @@
-function [fe, feTime] = calc_excitation(obj, eta, dt)
+function [fe, feTime, varargout] = calc_excitation(obj, eta, dt)
 % Calculates the time domain excitation force via convolution.
 % If the sampling rate of the irf is greater than eta, then eta values will
 % be upsampled to match by using linear interpolation. If they have the
@@ -54,7 +54,7 @@ elseif ratio ~= 1
     etaInterp     = interp1(dt .* (0:length(eta)-1), eta, etaInterpTime, 'pchip');
 else
     % don't do interpolation
-    warning('No Interpolation performed')
+    %warning('No Interpolation performed')
     etaInterp = eta;
     etaInterpTime = dtIrf .* [0:length(eta)-1];
 end
@@ -78,7 +78,9 @@ end
 
 % Trim the output
 trimmedTime = etaInterpTime(~isnan(fe));
-fe = fe(~isnan(fe));
+idxKeep = ~isnan(fe);
+fe = fe(idxKeep);
+if nargout == 3, varargout{1} = etaInterp(idxKeep); end
 feTime = floor( (min(trimmedTime):dt:max(trimmedTime)) ./ dt) .* dt;
 
 idx = dsearchn(trimmedTime', feTime');

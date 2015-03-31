@@ -1,9 +1,9 @@
-function [hydParms] = read_hyd_file(obj)
+function [hydParms] = read_hyd_file(filename)
 % reads a .hyd file and outputs its contents
 %
 % [hydParms] = read_hyd_file(filename)
 
-fid = fopen(obj.hydFile,'r');
+fid = fopen(filename,'r');
 headers = textscan(fid,'%s',9,'delimiter',',');
 data = textscan(fid,'%f%f%f%f%f%f%f%f%f','delimiter',',');
 fclose(fid);
