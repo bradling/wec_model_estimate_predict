@@ -1,0 +1,12 @@
+*.log
+*.asv
+*.tex
+*.bib
+*.mat
+*.fig
+*.pdf
+*.txt
+*.gz
+*.LIS
+*.emf
+documentation/wec_modeling.synctex.gz
