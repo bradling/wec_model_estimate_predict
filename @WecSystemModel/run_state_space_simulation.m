@@ -38,7 +38,8 @@ simResults.fk = nan(1,length(simResults.t));
 for ii = 1:length(simResults.t)
     simResults.z(:,ii) = SS.C(1,:)*yout(ii,:)';
     simResults.zDot(:,ii) = SS.C(2,:)*yout(ii,:)';
-    simResults.fr(ii) = -yout(ii,3) * yout(ii,5);
+    simResults.fr(ii) = obj.ssRad.C * yout(ii,1:3)' * yout(ii,5);
+ %   simResults.fr(ii) = -yout(ii,3) * yout(ii,5);
     simResults.fk(ii) = -yout(ii,4) * obj.kHyd;
 end
 
