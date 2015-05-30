@@ -47,8 +47,8 @@ function [t, irf] = calc_fe_irf(obj, mag, phase)
 freq  = obj.freq;
 t = obj.feIrf.t;
 
-zero_value = 1.1*mag(1);
-
+%zero_value = 1.1*mag(1);
+zero_value = 0;
 
 
 % Convert to two sided responses
