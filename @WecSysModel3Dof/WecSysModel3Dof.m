@@ -21,6 +21,12 @@ classdef WecSysModel3Dof < handle
         ssRadApproxOrder
     end
     
+    properties (SetAccess = public)
+        fcnPto = [];
+        fcnMooring = [];
+        userData
+    end
+    
     properties (SetAccess = private, GetAccess = private)
         verify_results
     end
@@ -30,7 +36,7 @@ classdef WecSysModel3Dof < handle
     % Public Methods 
     %
     
-    methods (Access = public)
+    methods 
         % Constructor
         function obj = WecSysModel3Dof(hydFilename, varargin)
             % WecModel = WecSystemModel3Dof(ansys_ls_file) uses default values
@@ -46,7 +52,7 @@ classdef WecSysModel3Dof < handle
             % .radIrf.dt = 0.05;
             % .radIrf.t (-0:0.05:20) - time span for radiation IRF
                         
-            
+            if nargin > 0 
             
             def.feIrf.dt  = 0.05;
             def.feIrf.t   = -20:def.feIrf.dt:20;
@@ -111,6 +117,8 @@ classdef WecSysModel3Dof < handle
             % Construct my state space model including radiation force
             % stuff
             
+            end
+            
             
         end % WecSystemModel
         
@@ -151,29 +159,34 @@ classdef WecSysModel3Dof < handle
             h2 = figure;
             set(h2, 'color', 'w')
             set(h2, 'units', 'inches')
-            set(h2, 'position', [1.3 0.7 5 3.7])
+            set(h2, 'position', [1.3 0.7 5 5])
             set(h2, 'name', 'Radiation Frequency Response')
             
+            subplot(2,1,1)
             plot(obj.freq, obj.radFreq'./1e3)
             grid on
             xlabel('Frequency (rad/s)')
             ylabel('Radiation Mag (kN-s/m)')
+            title('Radiation Damping Coefficient')
             legend('Surge', 'Heave', 'Pitch', 'Surge-Heave', ...
                 'Surge-Pitch', 'Heave-Pitch', 'location', 'northwest')
             
-            h3 = figure;
-            set(h3, 'color', 'w')
-            set(h3, 'units', 'inches')
-            set(h3, 'position', [1.6 0.4 5 3.7])
-            set(h3, 'name', 'Added Mass Frequency Response')
+%             h3 = figure;
+%             set(h3, 'color', 'w')
+%             set(h3, 'units', 'inches')
+%             set(h3, 'position', [1.6 0.4 5 3.2])
+%             set(h3, 'name', 'Added Mass Frequency Response')
             
+            subplot(2,1,2)
             plot(obj.freq, obj.addMass'./1e3)
             grid on
+            title('Added Mass Coefficient')
             xlabel('Frequency (rad/s)')
             ylabel('Added Mass (kN-s^2/m)')
-            legend('Surge', 'Heave', 'Pitch', 'location', 'best')
+            legend('Surge', 'Heave', 'Pitch', 'Surge-Heave', ...
+                'Surge-Pitch', 'Heave-Pitch', 'location', 'northwest')
             
-            if nargout > 0, varargout{1} = [h1 h2 h3]; end
+            if nargout > 0, varargout{1} = [h1 h2]; end
             
         end %disp_freq()
         
@@ -181,25 +194,25 @@ classdef WecSysModel3Dof < handle
             h = figure;
             set(h, 'color', 'w')
             set(h, 'units', 'inches')
-            set(h, 'position', [1.3 0.6 5 6.5])
+            set(h, 'position', [1.3 0.6 5 5.5])
             set(h, 'name', 'Fe Impulse Responses')
             
             subplot(3,1,1)
-            plot(obj.feIrf.t, obj.feIrf.irf(1,:), 'r')
-            ylabel('Fe Irf')
+            plot(obj.feIrf.t, obj.feIrf.irf(1,:)./1e3, 'r')
+            ylabel('Fe Irf (kN/m)')
             grid on
             title('Surge')
             
             subplot(3,1,2)
-            plot(obj.feIrf.t, obj.feIrf.irf(2,:), 'g')
-            ylabel('Fe Irf')
+            plot(obj.feIrf.t, obj.feIrf.irf(2,:)./1e3, 'g')
+            ylabel('Fe Irf (kN/m)')
             grid on
             title('Heave')
             
             subplot(3,1,3)
-            plot(obj.feIrf.t, obj.feIrf.irf(3,:), 'b')
+            plot(obj.feIrf.t, obj.feIrf.irf(3,:)./1e3, 'b')
             xlabel('Time (sec)')
-            ylabel('Fe Irf')
+            ylabel('Fe Irf (kN/m)')
             grid on
             title('Pitch')
             
@@ -207,7 +220,17 @@ classdef WecSysModel3Dof < handle
         end % disp_fe_irf()
 
         function ss = construct_state_space_model(obj)
-            
+            % ss = obj.construct_state_space_model()
+            %
+            % ss is an output strcutre containing a, b, c, d state space
+            % matrics in the following form:
+            %
+            % zdot = ss.a*z + ss.b*u + ss.d*w,
+            %    y = ss.c*z
+            %
+            % NOTES: - model is in continuous time
+            %        - mooring forces and PTO forces are not currently
+            %          included, assumed to be a part of the input u
             
             % First lets build the radiation submodel
             m = obj.ssRadApproxOrder;
@@ -243,14 +266,46 @@ classdef WecSysModel3Dof < handle
                      eye(3)        zeros(3)           zeros(3,6*m) ; 
                      Br            zeros(6*m, 3)      Ar           ];
             ss.b = [Jinv ; zeros(3+6*m, 3) ];
+            ss.d = [Jinv ; zeros(3+6*m, 3) ];
             ss.c = [eye(6) zeros(6, 6*m)];
             
         end % construct_state_space_model()
-        
-        function set_bgen(obj, bGen)
-            obj.bGen = bGen;
+
+        function set.fcnMooring(obj, fcn)
+            % obj.fcnMooring = @fcn, wher @fcn is a function handle with
+            % the following form:
+            %
+            % Fm = @fcn(s,sdot), where Fm is the column vector of mooring
+            % forces, s and sdot are column vectors for position and
+            % velocity of the device.
+            
+            if ~isa(fcn, 'function_handle')
+                error('Must be a function handle');
+            end
+            obj.fcnMooring = fcn;
         end
         
+        function set.fcnPto(obj, fcn)
+            % obj.fcnPto = @fcn, wher @fcn is a function handle with
+            % the following form:
+            %
+            % F = @fcn(s,sdot), where Fpto is the column vector of PTO
+            % forces, s and sdot are column vectors for position and
+            % velocity of the device.
+            
+            if ~isa(fcn, 'function_handle')
+                error('Must be a function handle');
+            end
+            obj.fcnPto = fcn;
+        end
+        
+        function newObj = copy(obj)
+            newObj = WecSysModel3Dof();
+            props = properties(obj);
+            for ii = 1:numel(props)
+                newObj.(props{ii}) = obj.(props{ii});
+            end
+        end
         
         function verify_model(obj)
             % verify model results
