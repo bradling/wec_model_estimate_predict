@@ -10,6 +10,7 @@ classdef KalmanDisturbanceEstimator < handle
         type = 'undefined'
         Q
         R
+        idxDist
     end
     
     methods
@@ -57,6 +58,27 @@ classdef KalmanDisturbanceEstimator < handle
             obj.augSys.b = sys.b;
             obj.augSys.c = sys.c;
             obj.augSys.dt = dt;
+            
+            obj.idxDist = [n+1 n+2 n+3];
+        end
+        
+        function persistance_model(obj, dt)
+            obj.type = 'persistant';
+            n = size(obj.origSys.a, 1);
+            m = obj.nDisturbances;
+            a = [obj.origSys.a obj.origSys.d ; 
+                 zeros(m, n) zeros(m) ];
+            b = [obj.origSys.b ; zeros(m, size(obj.origSys.b, 2))];
+            c = [obj.origSys.c zeros(size(obj.origSys.c, 1), m) ];
+            d = zeros(size(c,1), size(b, 2));
+            
+            sys = c2d(ss(a,b,c,d), dt, 'foh');
+            obj.augSys.a = sys.a;
+            obj.augSys.b = sys.b;
+            obj.augSys.c = sys.c;
+            obj.augSys.dt = dt;
+            
+            obj.idxDist = [n+1 n+2 n+3];
         end
         
         function define_covariances(obj, Q, R)
@@ -78,8 +100,12 @@ classdef KalmanDisturbanceEstimator < handle
             obj.R = R;
         end
         
-        function [xHat, xp, innov] = calc_estimates(obj, y, p0, x0)
+        function [results, xHat, xp, innov] = calc_estimates(obj, results, p0, x0)
             % each column of row is associated with a single time point
+            y = [results.sDotNoisy; results.sNoisy];
+            
+            results.estimator = obj;
+            
             n = size(obj.augSys.a, 1);
             A = obj.augSys.a;
             C = obj.augSys.c;
@@ -100,6 +126,7 @@ classdef KalmanDisturbanceEstimator < handle
                 xHat(:, ii+1) = xp(:,ii+1) + K*(y(:,ii+1) - C*xp(:,ii+1));  
                 P = (I - K*C)*P;
             end
+            results.feHat = xHat(obj.idxDist,:);
         end
     end
     
