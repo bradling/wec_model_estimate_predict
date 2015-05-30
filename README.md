@@ -27,6 +27,8 @@ A recursive, autoregressive, time-series prediciton method is used in this work.
 # For more theroretical background
 See:
 1. My thesis: to be published soon
+
 2. My METS extended abstract: http://s36.a2zinc.net/clients/pennwell/nha2015/Public/Calendar.aspx?TrackId=1381,1406,1407&View=Calendar
+
 3. My OMAE conference paper: 
 
